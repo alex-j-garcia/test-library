@@ -1,0 +1,25 @@
+:root {
+  /* Display & Box Model */
+  box-sizing: border-box;
+
+  /* Other */
+  font-size: 62.5%;
+}
+
+*,
+*::before,
+*::after {
+  /* Display & Box Model */
+  margin: 0;
+  padding: 0;
+  box-sizing: inherit;
+}
+
+body > div {
+  /* Display & Box Model */
+  margin: 5px;
+  padding: 20px;
+
+  /* Other */
+  font-size: 2rem;
+}
