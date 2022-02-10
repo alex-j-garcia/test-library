@@ -41,19 +41,17 @@ test.assertDeepEquals = (actual, expected) => { // ['a'] ['a']
  * ----------------------
  */
 test.showResult = (passed, test) => {
+  let container = document.querySelector("#content");
   let div = document.createElement("div");
   div.style.backgroundColor = passed ? "green" : "red";
   div.textContent = test;
-  document.body.appendChild(div);
+  container.appendChild(div);
 };
 
 test.scrollToLast = () => {
-  let body = document.querySelector("body");
-  let bodyBottom = body.getBoundingClientRect().bottom;
-  let windowHeight = window.innerHeight;
-  if (windowHeight < bodyBottom) {
-    window.pageYOffset = windowHeight + bodyBottom;
-  }
+  let tests = document.querySelectorAll("#content > div");
+  let last = tests[tests.length - 1];
+  last.scrollIntoView(false);
 };
 
 /*
