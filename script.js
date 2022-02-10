@@ -2,48 +2,44 @@
 
 let test = Object.create(null);
 
-// 1. a test accepts a string that describes the test
-// 2. it accepts a callback, inside which the test is
-//    performed
-// 3. The callback is executed. It's return value determines
-//    whether the test failed or not.
 test.test = (string, cb) => {
   let isPass = cb();
   test.showResult(isPass, string);
   test.scrollToLast();
 };
 
-// checking the types eliminates
-   // 1 --> "string"
-   // 1 --> [], {}
-   // "string" --> objects
-   // 1 --> undefined
-// does not eliminate
-   // {} & [] are both of type object
-   // historical bug: null is of type object
-   // null loosely equals undefined
 test.assertEquals = (actual, expected) => {
   if (typeof actual != typeof expected) return false;
   else return actual === expected;
 };
 
-/*
- * TODO:
- * test.assertDeepEquals should check properties of different objects
- * (should probably check properties recursively)
- */
-test.assertDeepEquals = (actual, expected) => {
-  if (actual === expected) return true;
-  else if (typeof actual != typeof expected) return false
-  else if (actual === null || expected === null) return false;
+test.assertDeepEquals = (actual, expected) => { // ['a'] ['a']
+  if (actual === expected) {
+    return true;
+  } else if (typeof actual != typeof expected) {
+    return false;
+  } else if (actual === null || expected === null) {
+    return false;
+  } else if (typeof actual != "object" || typeof expected != "object") {
+    return false;
+  } else if (Object.getPrototypeOf(actual) != Object.getPrototypeOf(expected)) {
+    return false;
+  }
 
-  let keys1 = Object.keys(actual), keys2 = Object.keys(expected); // ['a', 'b']  ['a', 'b']
+  let keys1 = Object.keys(actual), keys2 = Object.keys(expected);
   if (keys1.length !== keys2.length) return false;
 
-  for (let key of keys1) test.assertDeepEquals(actual[key], expected[key]); // (1, 1)
+  for (let key of keys1) {
+    if (!test.assertDeepEquals(actual[key], expected[key])) return false;
+  }
+  return true;
 };
 
-// DOM manipulation
+/*
+ * ----------------------
+ * DOM Manipulation
+ * ----------------------
+ */
 test.showResult = (passed, test) => {
   let div = document.createElement("div");
   div.style.backgroundColor = passed ? "green" : "red";
@@ -60,192 +56,234 @@ test.scrollToLast = () => {
   }
 };
 
-// Tests
+/*
+ * ---------------------
+ * Tests
+ * ---------------------
+ */
 
 // Should add a fail to DOM
-test.test("Failures should be red", () => false);
+test.test("Failures should be red - red", () => false);
 
 // Should add a pass to the DOM
-test.test("Passed tests should be green", () => true);
+test.test("Passed tests should be green - green", () => true);
 
-// assertEquals - A number should equal itself
-test.test("assertEquals - 1 equals 1", () => test.assertEquals(1, 1));
+// [assertEquals] A number should equal itself
+test.test("[assertEquals] 1 equals 1 - green", () => test.assertEquals(1, 1));
 
-// assertEquals - Two different numbers should not equal each other
+// [assertEquals] Two different numbers should not equal each other
 test.test(
-  "assertEquals - 1 doesn't equals 2 - red",
+  "[assertEquals] 1 doesn't equals 2 - red",
   () => test.assertEquals(1, 2)
 );
 
-// assertEquals - a string and a number should not be equal
+// [assertEquals] a string and a number should not be equal
 test.test(
-  "assertEquals - 1 should not equal '1'",
+  "[assertEquals] 1 should not equal '1' - red",
   () => test.assertEquals('1', 1)
 );
 
-// assertEquals - Two equal strings should return true
+// [assertEquals] Two equal strings should return true
 test.test(
-  "assertEquals - 'hello' equals 'hello'",
+  "[assertEquals] 'hello' equals 'hello' - green",
   () => test.assertEquals("hello", "hello")
 );
 
-// assertEquals - Two unequal strings should return false
-test.test("assertEquals - 'Hello' doesn't equal 'hello' - red", () => {
-  test.assertEquals("Hello", "hello");
+// [assertEquals] Two unequal strings should return false
+test.test("[assertEquals] 'Hello' doesn't equal 'hello' - red", () => {
+  return test.assertEquals("Hello", "hello");
 });
 
-// assertEquals - Two different objects should not equal each other
+// [assertEquals] Two different objects should not equal each other
 test.test(
-  "assertEquals - two different objects should not be equal - red",
+  "[assertEquals] two different objects should not be equal - red",
   () => test.assertEquals({}, {})
 );
 
-// assertEquals - the same object should equal each other
-test.test("assertEquals - The same object should equal itself", () => {
+// [assertEquals] the same object should equal each other
+test.test("[assertEquals] The same object should equal itself - green", () => {
   let obj = Object.create(null);
   let pointer = obj;
   return test.assertEquals(obj, pointer);
 });
 
-// assertEquals - An array should not equal an object
+// [assertEquals] An array should not equal an object
 test.test(
-  "assertEquals - An array should not equal an object - red",
+  "[assertEquals] An array should not equal an object - red",
   () => test.assertEquals([], {})
 );
 
-// assertEquals - An array should not equal another array
+// [assertEquals] An array should not equal another array
 test.test(
-  "assertEquals - an array should not equal another array - red",
+  "[assertEquals] an array should not equal another array - red",
   () => test.assertEquals([], [])
 );
 
-// assertEquals - The same array should equal itself
+// [assertEquals] The same array should equal itself
 test.test(
-  "assertEquals - The same array should equal itself", () => {
+  "[assertEquals] The same array should equal itself - green", () => {
     let array = new Array();
     let pointer = array;
     return test.assertEquals(array, pointer);
   }
 );
 
-// assertEquals - undefined should not equal null
+// [assertEquals] undefined should not equal null
 test.test(
-  "assertEquals - undefined should not equal null",
+  "[assertEquals] undefined should not equal null - red",
   () => {
     return test.assertEquals(undefined, null);
   }
 );
 
-// assertEquals - undefined should equal undefined
-test.test("assertEquals - undefined should equal undefined", () => {
+// [assertEquals] undefined should equal undefined
+test.test("[assertEquals] undefined should equal undefined - green", () => {
   return test.assertEquals(undefined, undefined);
 });
 
-// assertEquals - a function value should not equal another function value
+// [assertEquals] a function value should not equal another function value
 test.test(
-  "assertEquals - a function value should not equal another function value",
+  "[assertEquals] a function value should not equal another function value -" +
+  " red",
   () => test.assertEquals(function() {}, function() {})
 );
 
-// assertEquals - a function value should equal itself
-test.test("assertEquals - a function value should equal itself", () => {
+// [assertEquals] a function value should equal itself
+test.test("[assertEquals] a function value should equal itself -" +
+" green",
+() => {
   let func = function() {};
   let pointer = func;
   return test.assertEquals(func, pointer);
 });
 
-//  assertDeepEquals - A number should equal itself
-test.test("assertDeepEquals - 1 equals 1", () => test.assertDeepEquals(1, 1));
-
-// // assertDeepEquals - Two different numbers should not equal each other
+//  [assertDeepEquals] A number should equal itself
 test.test(
-  "assertDeepEquals - 1 doesn't equals 2 - red",
+  "[assertDeepEquals] 1 equals 1 - green",
+  () => test.assertDeepEquals(1, 1)
+);
+
+// [assertDeepEquals] Two different numbers should not equal each other
+test.test(
+  "[assertDeepEquals] 1 doesn't equal 2 - red",
   () => test.assertDeepEquals(1, 2)
 );
 
-// // assertDeepEquals - a string and a number should not be equal
+// [assertDeepEquals] a string and a number should not be equal
 test.test(
-  "assertDeepEquals - 1 should not equal '1'",
+  "[assertDeepEquals] 1 should not equal '1' - red",
   () => test.assertDeepEquals('1', 1)
 );
 
-// // assertDeepEquals - Two equal strings should return true
+// [assertDeepEquals] Two equal strings should return true
 test.test(
-  "assertDeepEquals - 'hello' equals 'hello'",
+  "[assertDeepEquals] 'hello' equals 'hello' - green",
   () => test.assertDeepEquals("hello", "hello")
 );
 
-// // assertDeepEquals - Two unequal strings should return false
-test.test("assertDeepEquals - 'Hello' doesn't equal 'hello' - red", () => {
-  test.assertDeepEquals("Hello", "hello");
+// [assertDeepEquals] Two unequal strings should return false
+test.test("[assertDeepEquals] 'Hello' doesn't equal 'hello' - red", () => {
+  return test.assertDeepEquals("Hello", "hello");
 });
 
-// // assertDeepEquals - Two different objects should not equal each other if
-// // they have different properties.
-// test.test(
-//   "assertDeepEquals - two different objects should not be equal if they have" +
-//   " different properties",
-//   () => test.assertDeepEquals({a: 1}, {a: 2})
-// );
+// [assertDeepEquals] Two different objects should not equal each other if
+// they have different properties.
+test.test(
+  "[assertDeepEquals] two different objects should not be equal if they have" +
+  " different properties - red",
+  () => test.assertDeepEquals({a: 1}, {a: 2})
+);
 
-// // assertDeepEquals - Two different objects should equal each other if they
-// // have the same properties and values
-// test.test(
-//   "assertDeepEquals - two different objects should be equal if they have" +
-//   " the same properties and values",
-//   () => test.assertDeepEquals({a: 1, b: 2}, {a: 1, b: 2})
-// );
+// [assertDeepEquals] Two different objects should equal each other if they
+// have the same properties and values
+test.test(
+  "[assertDeepEquals] two different objects should be equal if they have" +
+  " the same properties and values - green",
+  () => {
+    let test1 = test.assertDeepEquals({a: 1, b: 2}, {a: 1, b: 2});
+    let test2 = test.assertDeepEquals(
+      {a: 'a', b: [1, 2, 3]},
+      {a: 'a', b: [1, 2, 3]}
+    );
+    let test3 = test.assertDeepEquals(
+      {a: 'a', b: {a: 1, b: 'c'}},
+      {a: 'a', b: {a: 1, b: 'c'}}
+    );
+    return test1 && test2 && test3;
+  }
+);
 
-// // assertDeepEquals - the same object should equal each other
-// test.test("assertDeepEquals - The same object should equal itself", () => {
-//   let obj = Object.create(null);
-//   let pointer = obj;
-//   return test.assertDeepEquals(obj, pointer);
-// });
+// [assertDeepEquals] the same object should equal each other
+test.test("[assertDeepEquals] The same object should equal itself - green", () => {
+  let obj = Object.create(null);
+  let pointer = obj;
+  return test.assertDeepEquals(obj, pointer);
+});
 
-// // assertDeepEquals - An array should not equal an object
-// test.test(
-//   "assertDeepEquals - An array should not equal an object - red",
-//   () => test.assertDeepEquals([], {})
-// );
+// [assertDeepEquals] An array should not equal an object
+test.test(
+  "[assertDeepEquals] An array should not equal an object - red",
+  () => test.assertDeepEquals([], {})
+);
 
-// // assertDeepEquals - An array should not equal another array
-// test.test(
-//   "assertDeepEquals - an array should not equal another array - red",
-//   () => test.assertDeepEquals([], [])
-// );
+// [assertDeepEquals] An array should not equal another array with different
+// properties
+test.test(
+  "[assertDeepEquals] an array should not equal another array with different" +
+  " properties - red",
+  () => {
+    let test1 = test.assertDeepEquals(['a'], ['b']);
+    let test2 = test.assertDeepEquals([1, 2, 3], [1, 2]);
+    return test1 && test2;
+  }
+);
 
-// // assertDeepEquals - The same array should equal itself
-// test.test(
-//   "assertDeepEquals - The same array should equal itself", () => {
-//     let array = new Array();
-//     let pointer = array;
-//     return test.assertDeepEquals(array, pointer);
-//   }
-// );
+// [assertDeepEquals] An array should equal another array with identical
+// properties
+test.test(
+  "[assertDeepEquals] an array should equal another array with identical" +
+  " properties - green",
+  () => {
+    let test1 = test.assertDeepEquals(['a'], ['a']);
+    let test2 = test.assertDeepEquals([1, 2, 3], [1, 2, 3]);
+    return test1 && test2;
+  }
+);
 
-// // assertDeepEquals - undefined should not equal null
-// test.test(
-//   "assertDeepEquals - undefined should not equal null",
-//   () => {
-//     return test.assertDeepEquals(undefined, null);
-//   }
-// );
+// [assertDeepEquals] The same array should equal itself
+test.test(
+  "[assertDeepEquals] The same array should equal itself - green", () => {
+    let array = new Array();
+    let pointer = array;
+    return test.assertDeepEquals(array, pointer);
+  }
+);
 
-// // assertDeepEquals - undefined should equal undefined
-// test.test("assertDeepEquals - undefined should equal undefined", () => {
-//   return test.assertEquals(undefined, undefined);
-// });
+// [assertDeepEquals] undefined should not equal null
+test.test(
+  "[assertDeepEquals] undefined should not equal null - red",
+  () => test.assertDeepEquals(undefined, null)
+);
 
-// // assertDeepEquals - a function value should not equal another function value
-// test.test(
-//   "assertDeepEquals - a function value should not equal another function value",
-//   () => test.assertDeepEquals(function() {}, function() {})
-// );
+// [assertDeepEquals] undefined should equal undefined
+test.test(
+  "[assertDeepEquals] undefined should equal undefined - green",
+  () => test.assertEquals(undefined, undefined)
+);
 
-// // assertDeepEquals - a function value should equal itself
-// test.test("assertDeepEquals - a function value should equal itself", () => {
-//   let func = function() {};
-//   let pointer = func;
-//   return test.assertDeepEquals(func, pointer);
-// });
+// [assertDeepEquals] a function value should not equal another function value
+test.test(
+  "[assertDeepEquals] a function value should not equal another function " +
+  "value - red",
+  () => test.assertDeepEquals(function() {}, function() {})
+);
+
+// [assertDeepEquals] a function value should equal itself
+test.test(
+  "[assertDeepEquals] a function value should equal itself - green",
+  () => {
+    let func = function() {};
+    let pointer = func;
+    return test.assertDeepEquals(func, pointer);
+  }
+);
